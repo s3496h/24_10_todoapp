@@ -55,17 +55,23 @@ function useTodosStatus() {
   };
 
   const removeTodo = (id) => {
-    const updatedTodos = todos.filter((todo) => todo.id !== id);
-    setTodos(updatedTodos);
-    saveToLocalStorage(updatedTodos, lastTodoIdRef.current);
+    const shouldRemove = window.confirm('정말 삭제하시겠습니까?');
+    if (shouldRemove) {
+      const updatedTodos = todos.filter((todo) => todo.id !== id);
+      setTodos(updatedTodos);
+      saveToLocalStorage(updatedTodos, lastTodoIdRef.current);
+    }
   };
 
   const modifyTodo = (id, newContent) => {
-    const updatedTodos = todos.map((todo) =>
-      todo.id === id ? { ...todo, content: newContent } : todo
-    );
-    setTodos(updatedTodos);
-    saveToLocalStorage(updatedTodos, lastTodoIdRef.current);
+    const shouldModify = window.confirm(`"${newContent}"로 수정하시겠습니까?`);
+    if (shouldModify) {
+      const updatedTodos = todos.map((todo) =>
+        todo.id === id ? { ...todo, content: newContent } : todo
+      );
+      setTodos(updatedTodos);
+      saveToLocalStorage(updatedTodos, lastTodoIdRef.current);
+    }
   };
 
   const toggleComplete = (id) => {
@@ -91,6 +97,7 @@ const TodoListItem = ({
   toggleComplete,
   onDelete,
   onEdit,
+  index, // New prop for the index of the todo
 }) => {
   return (
     <li key={todo.id} className="tw-mb-3 tw-bg-blue-100 tw-p-2 tw-rounded-md hover:tw-bg-blue-200 transition-colors duration-200">
@@ -111,12 +118,16 @@ const TodoListItem = ({
             'tw-line-through': todo.isCompleted,
           })}
         >
+          {/* Display todo number and content */}
+          <span className="tw-font-bold">{index + 1}. </span>
           {todo.content}
         </div>
         <IconButton onClick={() => onDelete(todo.id)} color="inherit">
           <FaTrash />
         </IconButton>
       </div>
+      {/* Display registration date */}
+      <div className="tw-text-sm tw-text-gray-600">{todo.regDate}</div>
     </li>
   );
 };
@@ -149,7 +160,7 @@ const TodoList = () => {
 
   return (
     <ul>
-      {todos.map((todo) =>
+      {todos.map((todo, index) => ( // Pass the index to TodoListItem
         editingId === todo.id ? (
           <form onSubmit={handleEditSubmit} key={todo.id} className="tw-flex tw-gap-2 tw-mb-3">
             <TextField
@@ -171,19 +182,24 @@ const TodoList = () => {
             toggleComplete={toggleComplete}
             onDelete={removeTodo}
             onEdit={handleEdit}
+            index={index} // Pass the index as a prop
           />
         )
-      )}
+      ))}
     </ul>
   );
 };
-
 // App 컴포넌트
 function App() {
+ 
   const { addTodo } = useTodosStatus();
   const [newTodo, setNewTodo] = React.useState('');
 
   const handleAddTodo = () => {
+    if (!newTodo.trim()) {  // Check if newTodo is empty or contains only whitespace
+      alert('내용을 입력하세요!'); // Display an alert if input is empty
+      return; // Stop the function from proceeding further
+    }
     addTodo(newTodo);
     setNewTodo('');
   };
